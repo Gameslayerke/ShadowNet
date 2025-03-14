@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Form, Button, Alert, Spinner } from "react-bootstrap";
+import { useAuth } from "./AuthContext";
 
 const SignIn = () => {
   const [username, setUsername] = useState("");
@@ -10,12 +11,8 @@ const SignIn = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // Hardcoded admin credentials
-  const ADMIN_USERNAME = "admin";
-  const ADMIN_PASSWORD = "admin123";
-
-  // Form validation
   const validateForm = () => {
     if (!username || !password) {
       setError("Username and password are required.");
@@ -37,28 +34,20 @@ const SignIn = () => {
     setError("");
 
     try {
-      // Check if the user is the admin
-      if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        // Redirect to AddProduct page for admin
-        navigate("/AddProduct");
+      const data = new FormData();
+      data.append("username", username);
+      data.append("password", password);
+
+      const response = await axios.post(
+        "https://alvins.pythonanywhere.com/api/signin",
+        data
+      );
+
+      if (response.data.user) {
+        login(response.data.user);
+        navigate("/GetProducts");
       } else {
-        // For regular users, send data to the API
-        const data = new FormData();
-        data.append("username", username);
-        data.append("password", password);
-
-        const response = await axios.post(
-          "https://alvins.pythonanywhere.com/api/signin",
-          data
-        );
-
-        // Check if the user exists in the server
-        if (response.data.user) {
-          localStorage.setItem("user", JSON.stringify(response.data.user));
-          navigate("/"); // Redirect to the home page for regular users
-        } else {
-          setError(response.data.message || "Invalid username or password.");
-        }
+        setError(response.data.message || "Invalid username or password.");
       }
     } catch (error) {
       setError("Something went wrong. Please try again.");

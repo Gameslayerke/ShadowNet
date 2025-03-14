@@ -1,20 +1,22 @@
 import axios from "axios";
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Spinner } from "react-bootstrap"; // For the loading spinner
+import { Link, useNavigate } from "react-router-dom";
+import { Form, Button, Alert, Spinner } from "react-bootstrap";
+import { useAuth } from "./AuthContext";
 
 const SignUp = () => {
-  // State variables
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Form validation
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const validateForm = () => {
     if (!username || !email || !phone || !password || !confirmPassword) {
       setError("All fields are required.");
@@ -63,7 +65,6 @@ const SignUp = () => {
       data.append("phone", phone);
       data.append("password", password);
 
-      // Send data to the API
       const response = await axios.post(
         "https://alvins.pythonanywhere.com/api/signup",
         data
@@ -71,6 +72,9 @@ const SignUp = () => {
 
       setLoading(false);
       setSuccess(response.data.success);
+
+      login(response.data.user);
+      navigate("/GetProducts");
     } catch (error) {
       setLoading(false);
       setError("Something went wrong. Please try again.");
